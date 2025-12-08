@@ -254,28 +254,3 @@ App runs at:
 5. Deploy 🎉
 
 ---
-
-# 🎯 Why This Project Is Impressive for Resume
-
-✔ Full-stack MERN project
-✔ Authentication + Protected routes
-✔ Modern UI (Tailwind / Modals / DnD)
-✔ Real-world job tracking logic
-✔ Clean code architecture
-✔ Deployed full-stack application
-✔ Demonstrates frontend, backend, and database skills
-
----
-
-# 🤝 Contributing
-
-Pull requests are welcome.
-For major changes, please open an issue.
-
----
-
-# 📝 License
-
-MIT License © 2024 YOUR NAME
-
-
