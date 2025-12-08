@@ -113,8 +113,31 @@ Clean removal from MongoDB.
 
 ### 🔷 Add Job Modal
 
-*(Replace with your screenshot)*
-![Add Job Screenshot](https://via.placeholder.com/800x450?text=Add+Job+Screenshot)
+## 📸 Screenshots
+
+### 🔵 Login Page  
+<img src="screenshots/login.png" width="800"/>
+
+---
+
+### 🔵 Dashboard View  
+<img src="screenshots/dashboard.png" width="800"/>
+
+---
+
+### 🔵 Job Details Modal  
+<img src="screenshots/details.png" width="800"/>
+
+---
+
+### 🔵 Add Job Modal  
+<img src="screenshots/addjob.png" width="800"/>
+
+---
+
+### 🔵 Stages Popup  
+<img src="screenshots/stages.png" width="800"/>
+
 
 ---
 
