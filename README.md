@@ -92,27 +92,7 @@ Clean removal from MongoDB.
 * Perfectly centered layout
 * Smooth modals
 * LinkedIn-like interaction
-
 ---
-
-# 📸 Screenshots
-
-### 🔷 Dashboard View
-
-*(Replace with your screenshot)*
-![Dashboard Screenshot](https://via.placeholder.com/800x450?text=Dashboard+Screenshot)
-
----
-
-### 🔷 Job Details Modal
-
-*(Replace with your screenshot)*
-![Job Details Screenshot](https://via.placeholder.com/800x450?text=Job+Details+Screenshot)
-
----
-
-### 🔷 Add Job Modal
-
 ## 📸 Screenshots
 
 ### 🔵 Login Page  
