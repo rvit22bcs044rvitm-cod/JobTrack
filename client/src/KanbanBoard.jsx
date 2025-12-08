@@ -78,7 +78,9 @@ const KanbanBoard = () => {
     setStageOpen(false);
   };
 
-  // OPEN DETAILS POPUP
+  // ======================================================
+  // OPEN DETAILS POPUP (FULL EDIT MODE)
+  // ======================================================
   const openDetails = (job) => {
     setDetailJob(job);
 
@@ -93,30 +95,52 @@ const KanbanBoard = () => {
 
   const closeDetails = () => setDetailJob(null);
 
+  // ======================================================
+  // ⭐ UPDATED FUNCTION — SAVE CHANGES (ALL FIELDS)
+  // ======================================================
   const saveDetailStages = async () => {
     if (!detailJob) return;
 
-    let payload = [];
+    let stagesPayload = [];
     const col = detailJob.status;
 
     if (col === "interview") {
-      payload = stages.filter((s) => s.name.trim());
+      stagesPayload = stages.filter((s) => s.name.trim());
     } else if (col === "rejected") {
-      payload = [{ name: jobStatus, status: "completed" }];
+      stagesPayload = [{ name: jobStatus, status: "completed" }];
     } else if (col === "offer") {
-      payload = [{ name: offerStatus, status: "completed" }];
+      stagesPayload = [{ name: offerStatus, status: "completed" }];
     }
 
-    await updateJobStages(detailJob.id, payload);
-    setDetailJob({ ...detailJob, stages: payload });
+    const extraFields = {
+      company: detailJob.company,
+      role: detailJob.role,
+      description: detailJob.description || "",
+      location: detailJob.location || "",
+      salary: detailJob.salary || "",
+      status: detailJob.status,
+    };
+
+    await updateJobStages(detailJob.id, stagesPayload, extraFields);
+
+    setDetailJob((prev) => ({
+      ...prev,
+      ...extraFields,
+      stages: stagesPayload,
+    }));
+
+    setDetailJob(null);
   };
 
+  // ======================================================
+  // BOARD RENDER
+  // ======================================================
   return (
     <>
-      {/* BOARD */}
       <div className="max-w-6xl mx-auto">
         <DragDropContext onDragEnd={onDragEnd}>
           <div className="flex gap-6 py-6 overflow-x-auto">
+
             {Object.entries(columns).map(([colId, col]) => (
               <div
                 key={colId}
@@ -134,11 +158,7 @@ const KanbanBoard = () => {
                       className="space-y-3 min-h-[80px]"
                     >
                       {col.items.map((item, index) => (
-                        <Draggable
-                          key={item.id}
-                          draggableId={item.id}
-                          index={index}
-                        >
+                        <Draggable key={item.id} draggableId={item.id} index={index}>
                           {(dragProps) => (
                             <div
                               ref={dragProps.innerRef}
@@ -168,7 +188,7 @@ const KanbanBoard = () => {
                                   Role: {item.role}
                                 </div>
 
-                                {/* OFFER STATUS ON CARD */}
+                                {/* OFFER STATUS */}
                                 {colId === "offer" &&
                                   item.stages?.length > 0 && (
                                     <span
@@ -191,7 +211,6 @@ const KanbanBoard = () => {
 
                               {/* BUTTONS */}
                               <div className="flex justify-between mt-3 text-[11px]">
-                                {/* STAGES BUTTON */}
                                 {colId !== "applied" && (
                                   <button
                                     className="px-2 py-1 rounded bg-blue-600 text-white hover:bg-blue-500"
@@ -204,7 +223,6 @@ const KanbanBoard = () => {
                                   </button>
                                 )}
 
-                                {/* NEXT BUTTON (HIDE IN OFFER COLUMN) */}
                                 {colId !== "offer" && (
                                   <button
                                     className="px-2 py-1 rounded bg-green-600 text-white hover:bg-green-500"
@@ -228,13 +246,12 @@ const KanbanBoard = () => {
                 </Droppable>
               </div>
             ))}
+
           </div>
         </DragDropContext>
       </div>
 
-      {/* ============================
-        STAGES POPUP
-      ============================== */}
+      {/* ============================ STAGES POPUP ============================ */}
       {stageOpen && (
         <div
           className="fixed inset-0 bg-black/60 flex items-center justify-center z-[9999]"
@@ -250,7 +267,7 @@ const KanbanBoard = () => {
               {stageColumn === "offer" && "Offer Status"} – {stageJob?.company}
             </h2>
 
-            {/* PROCESS */}
+            {/* INTERVIEW STAGE UI */}
             {stageColumn === "interview" && (
               <>
                 <div className="space-y-2 max-h-64 overflow-y-auto mb-3">
@@ -258,7 +275,7 @@ const KanbanBoard = () => {
                     <div key={index} className="flex gap-2 items-center">
                       <input
                         className="flex-1 p-2 bg-slate-800 border border-slate-700 rounded text-white"
-                        placeholder="Stage (OA, Tech 1, HR...)"
+                        placeholder="Stage (OA, Tech, HR...)"
                         value={stage.name}
                         onChange={(e) =>
                           updateStageField(index, "name", e.target.value)
@@ -293,7 +310,7 @@ const KanbanBoard = () => {
               </>
             )}
 
-            {/* JOB STATUS */}
+            {/* REJECTED */}
             {stageColumn === "rejected" && (
               <select
                 className="w-full p-2 bg-slate-800 border border-slate-700 rounded text-white"
@@ -319,14 +336,12 @@ const KanbanBoard = () => {
             )}
 
             <div className="flex justify-end gap-2 mt-4">
-              <button
-                className="px-3 py-2 rounded bg-gray-700 text-white text-xs"
+              <button className="px-3 py-2 rounded bg-gray-700 text-white text-xs"
                 onClick={() => setStageOpen(false)}
               >
                 Cancel
               </button>
-              <button
-                className="px-3 py-2 rounded bg-blue-600 text-white text-xs hover:bg-blue-500"
+              <button className="px-3 py-2 rounded bg-blue-600 text-white text-xs hover:bg-blue-500"
                 onClick={saveStages}
               >
                 Save
@@ -336,9 +351,7 @@ const KanbanBoard = () => {
         </div>
       )}
 
-      {/* ============================
-          FULL EDITABLE DETAILS POPUP
-      ============================== */}
+      {/* ============================ DETAILS POPUP ============================ */}
       {detailJob && (
         <div
           className="fixed inset-0 bg-black/60 flex items-center justify-center z-[9999]"
@@ -348,13 +361,10 @@ const KanbanBoard = () => {
             className="bg-slate-900 border border-slate-700 rounded-xl px-6 py-5 w-[520px] shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* HEADER */}
+
             <div className="flex justify-between mb-3">
               <h2 className="text-lg font-semibold">{detailJob.company}</h2>
-              <button
-                className="text-slate-400 hover:text-white"
-                onClick={closeDetails}
-              >
+              <button className="text-slate-400 hover:text-white" onClick={closeDetails}>
                 ✕
               </button>
             </div>
@@ -487,11 +497,14 @@ const KanbanBoard = () => {
                 Save Changes
               </button>
             </div>
+
           </div>
         </div>
       )}
+
     </>
   );
 };
 
 export default KanbanBoard;
+

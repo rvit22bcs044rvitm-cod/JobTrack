@@ -9,24 +9,22 @@ import axios from "axios";
 const JobContext = createContext();
 export const useJobContext = () => useContext(JobContext);
 
-// ----------------------
-// AXIOS INSTANCE WITH TOKEN
-// ----------------------
+// ----------------------------------------
+// AXIOS INSTANCE
+// ----------------------------------------
 const API = axios.create({
   baseURL: "http://localhost:5001",
 });
 
 API.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+  if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
-// ----------------------
+// ----------------------------------------
 // JOB CONTEXT PROVIDER
-// ----------------------
+// ----------------------------------------
 export const JobProvider = ({ children }) => {
   const [columns, setColumns] = useState({
     applied: { id: "applied", title: "APPLIED", items: [] },
@@ -35,9 +33,9 @@ export const JobProvider = ({ children }) => {
     offer: { id: "offer", title: "OFFER", items: [] },
   });
 
-  // ----------------------
-  // FETCH JOBS FROM BACKEND
-  // ----------------------
+  // ----------------------------------------
+  // FETCH JOBS
+  // ----------------------------------------
   const fetchJobs = async () => {
     try {
       const res = await API.get("/jobs");
@@ -51,18 +49,17 @@ export const JobProvider = ({ children }) => {
       };
 
       jobs.forEach((job) => {
-        const key =
-          ["applied", "interview", "rejected", "offer"].includes(job.status)
-            ? job.status
-            : "applied";
+        const key = ["applied", "interview", "rejected", "offer"].includes(job.status)
+          ? job.status
+          : "applied";
 
         newColumns[key].items.push({
           id: job._id,
           company: job.company,
           role: job.role,
-          description: job.description,
-          location: job.location,
-          salary: job.salary,
+          description: job.description || "",
+          location: job.location || "",
+          salary: job.salary || "",
           stages: job.stages || [],
           status: job.status,
           date: new Date(job.dateApplied).toLocaleDateString(),
@@ -79,9 +76,9 @@ export const JobProvider = ({ children }) => {
     fetchJobs();
   }, []);
 
-  // ----------------------
+  // ----------------------------------------
   // ADD JOB
-  // ----------------------
+  // ----------------------------------------
   const addJob = async (company, role, description, location, salary) => {
     try {
       await API.post("/jobs", {
@@ -97,9 +94,9 @@ export const JobProvider = ({ children }) => {
     }
   };
 
-  // ----------------------
+  // ----------------------------------------
   // DELETE JOB
-  // ----------------------
+  // ----------------------------------------
   const deleteJob = async (id) => {
     try {
       await API.delete(`/jobs/${id}`);
@@ -109,9 +106,9 @@ export const JobProvider = ({ children }) => {
     }
   };
 
-  // ----------------------
+  // ----------------------------------------
   // MOVE TO NEXT COLUMN
-  // ----------------------
+  // ----------------------------------------
   const moveToNext = async (job) => {
     const order = ["applied", "interview", "rejected", "offer"];
     const currentIndex = order.indexOf(job.status);
@@ -128,21 +125,57 @@ export const JobProvider = ({ children }) => {
     }
   };
 
-  // ----------------------
-  // UPDATE JOB STAGES
-  // ----------------------
-  const updateJobStages = async (jobId, stages) => {
+  // ----------------------------------------
+  // ⭐ FINAL UPDATED FUNCTION — UPDATE ALL FIELDS
+  // ----------------------------------------
+  const updateJobStages = async (jobId, stagesPayload, extraFields = {}) => {
     try {
-      await API.put(`/jobs/${jobId}`, { stages });
-      fetchJobs();
+      const body = {
+        ...extraFields,
+        stages: stagesPayload,
+      };
+
+      const res = await API.put(`/jobs/${jobId}`, body);
+      const updated = res.data;
+
+      // Convert backend -> frontend shape
+      const updatedJob = {
+        id: updated._id,
+        company: updated.company,
+        role: updated.role,
+        description: updated.description || "",
+        location: updated.location || "",
+        salary: updated.salary || "",
+        status: updated.status,
+        stages: updated.stages || [],
+      };
+
+      // Update columns UI
+      setColumns((prev) => {
+        const newCols = {};
+
+        // remove job from all columns
+        for (const [colId, col] of Object.entries(prev)) {
+          newCols[colId] = {
+            ...col,
+            items: col.items.filter((item) => item.id !== jobId),
+          };
+        }
+
+        // add job to its CORRECT column
+        const correctColumn = updatedJob.status;
+        newCols[correctColumn].items.push(updatedJob);
+
+        return newCols;
+      });
     } catch (err) {
-      console.error("Update stages failed:", err);
+      console.error("updateJobStages error:", err);
     }
   };
 
-  // ----------------------
-  // DRAG AND DROP LOGIC
-  // ----------------------
+  // ----------------------------------------
+  // DRAG & DROP
+  // ----------------------------------------
   const moveCard = async (source, destination) => {
     if (!destination) return;
 
@@ -155,7 +188,6 @@ export const JobProvider = ({ children }) => {
     const [removed] = sourceItems.splice(source.index, 1);
 
     if (source.droppableId !== destination.droppableId) {
-      // Move to another column
       destItems.splice(destination.index, 0, removed);
 
       setColumns({
@@ -173,8 +205,8 @@ export const JobProvider = ({ children }) => {
         fetchJobs();
       }
     } else {
-      // Reorder in same column
       sourceItems.splice(destination.index, 0, removed);
+
       setColumns({
         ...columns,
         [source.droppableId]: { ...sourceCol, items: sourceItems },
@@ -182,9 +214,9 @@ export const JobProvider = ({ children }) => {
     }
   };
 
-  // ----------------------
-  // RETURN CONTEXT API
-  // ----------------------
+  // ----------------------------------------
+  // PROVIDER RETURN
+  // ----------------------------------------
   return (
     <JobContext.Provider
       value={{
@@ -193,7 +225,7 @@ export const JobProvider = ({ children }) => {
         deleteJob,
         moveToNext,
         moveCard,
-        updateJobStages,
+        updateJobStages, // UPDATED VERSION INCLUDED
       }}
     >
       {children}
